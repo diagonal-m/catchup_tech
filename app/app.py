@@ -55,7 +55,7 @@ class Qiita:
         @return: 送信するメッセージ
         """
         base_url = 'https://qiita.com/tags/'
-        urls = list()
+        urls, titles = list(), list()
         tags = self.tag_dict[day_of_week]['tags']
         for tag in tags:
             qiita_tag_url = base_url + tag
@@ -65,14 +65,19 @@ class Qiita:
                 for report in
                 soup.find('div', class_='css-10v1rem e1mdkbz70').find_all('div', class_='css-bbe22u eomqo7a0')
             ]
+            titles.extend([
+                report.text for report in report_list
+            ])
             urls.extend([
-                [report.find_all('a')[1].attrs['href'] for report in report_list]
+                report.find_all('a')[1].attrs['href'] for report in report_list
             ])
             sleep(3)
 
-        urls = list(set(urls))
+        message_list = [f'<{u}|{t}>' for u, t in zip(urls, titles)]
 
-        return '\n'.join(urls)
+        message_list = list(set(message_list))
+
+        return '\n'.join(message_list)
 
 
 class CatchupTech(Qiita):
