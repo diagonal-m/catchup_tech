@@ -8,8 +8,8 @@ ENV LC_ALL C.UTF-8
 ENV TZ Asia/Tokyo
 
 # 環境変数の設定
-ARG webhook
-ENV WEBHOOK=$webhook
+ARG qiita_webhook
+ENV QIITA_WEBHOOK=$qiita_webhook
 
 # /tmpにappとdockerをコピー
 COPY . /tmp
