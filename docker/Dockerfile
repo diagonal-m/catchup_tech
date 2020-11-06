@@ -9,7 +9,9 @@ ENV TZ Asia/Tokyo
 
 # 環境変数の設定
 ARG qiita_webhook
+ARG blog_webhook
 ENV QIITA_WEBHOOK=$qiita_webhook
+ENV BLOG_WEBHOOK=$blog_webhook
 
 # /tmpにappとdockerをコピー
 COPY . /tmp

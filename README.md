@@ -15,5 +15,5 @@ $ docker build --build-arg webhook='webhookxxxxx' -f docker/Dockerfile -t tech -
 
 ```
 $ crontab -l
-* 5 * * * docker run -i tech
+0 5 * * * docker run -i tech
 ```

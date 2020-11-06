@@ -1,11 +1,11 @@
 import os
 import json
 from time import sleep
-from datetime import datetime
+from datetime import datetime, timedelta
 import requests
 from bs4 import BeautifulSoup
 
-from consts import QIITA_WEBHOOK
+from consts import QIITA_WEBHOOK, BLOG_WEBHOOK
 
 
 def slack(webhook: str, message: str):
@@ -29,6 +29,42 @@ def get_soup(url: str) -> BeautifulSoup:
     return BeautifulSoup(response, 'html.parser')
 
 
+class TechBlog:
+    """
+    テックブログキャッチアップクラス
+    """
+    def __init__(self):
+        """
+        初期化メソッド
+        """
+        self.td = timedelta(days=1)
+
+    def hatena_culation(self, to_day: datetime) -> str:
+        """
+        Hatena Developer Blogからキュレーションする関数
+        @return: 送信するメッセージ
+        """
+        hatena = 'https://developer.hatenastaff.com/archive'
+        urls, titles = list(), list()
+        message = ''
+        yesterday = (to_day - self.td).strftime('%Y-%m-%d')
+        soup = get_soup(hatena)
+
+        for report in soup.find('div', id='main-inner').find_all('section'):
+            if yesterday == report.find('time').text.strip():
+                titles.append(report.find('h1').text_strip())
+                urls.append(report.find('a', class_='entry-title-link').attrs['href'])
+            else:
+                break
+
+        if len(titles) == 0:
+            return message
+
+        message_list = [f'<{u}|{t}>' for u, t in zip(urls, titles)]
+
+        return '\n'.join(message_list)
+
+
 class Qiita:
     """
     qiitaキャッチアップクラス
@@ -47,7 +83,7 @@ class Qiita:
             'Sat': {'tags': ['GoogleCloudPlatform', 'GitHubActions']}
         }
 
-    def culation(self, day_of_week: str) -> str:
+    def qiita_culation(self, day_of_week: str) -> str:
         """
         曜日ごとに指定したタグの過去一週間のLGTMが多かった投稿を返す
 
@@ -80,7 +116,7 @@ class Qiita:
         return '\n'.join(message_list)
 
 
-class CatchupTech(Qiita):
+class CatchupTech(Qiita, TechBlog):
     """
     キャッチアップテッククラス
     """
@@ -95,7 +131,22 @@ class CatchupTech(Qiita):
     def exec(self):
         """
         """
-        slack(QIITA_WEBHOOK, self.culation(self.day_of_week))
+        functions = {
+            'qiita': {
+                'func': self.qiita_culation,
+                'args': self.day_of_week,
+                'webhook': QIITA_WEBHOOK,
+            },
+            'tech_blog': {
+                'func': self.hatena_culation,
+                'args': self.today,
+                'webhook': BLOG_WEBHOOK
+            }
+        }
+        for _, func in functions.items():
+            message = func['func'](func['args'])
+            if message:
+                slack(func['webhook'], message)
 
 
 if __name__ == '__main__':
