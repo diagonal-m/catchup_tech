@@ -33,12 +33,6 @@ class TechBlog:
     """
     テックブログキャッチアップクラス
     """
-    def __init__(self):
-        """
-        初期化メソッド
-        """
-        self.td = timedelta(days=1)
-
     def hatena_culation(self, to_day: datetime) -> str:
         """
         Hatena Developer Blogからキュレーションする関数
@@ -47,12 +41,12 @@ class TechBlog:
         hatena = 'https://developer.hatenastaff.com/archive'
         urls, titles = list(), list()
         message = ''
-        yesterday = (to_day - self.td).strftime('%Y-%m-%d')
+        yesterday = (to_day - timedelta(days=1)).strftime('%Y-%m-%d')
         soup = get_soup(hatena)
 
         for report in soup.find('div', id='main-inner').find_all('section'):
             if yesterday == report.find('time').text.strip():
-                titles.append(report.find('h1').text_strip())
+                titles.append(report.find('h1').text.strip())
                 urls.append(report.find('a', class_='entry-title-link').attrs['href'])
             else:
                 break
@@ -132,21 +126,21 @@ class CatchupTech(Qiita, TechBlog):
         """
         """
         functions = {
-            'qiita': {
+            'Qiita': {
                 'func': self.qiita_culation,
                 'args': self.day_of_week,
                 'webhook': QIITA_WEBHOOK,
             },
-            'tech_blog': {
+            'Hatena Developer Blog': {
                 'func': self.hatena_culation,
                 'args': self.today,
                 'webhook': BLOG_WEBHOOK
             }
         }
-        for _, func in functions.items():
+        for site, func in functions.items():
             message = func['func'](func['args'])
             if message:
-                slack(func['webhook'], message)
+                slack(func['webhook'],f'{site}\n{message}')
 
 
 if __name__ == '__main__':
