@@ -58,6 +58,32 @@ class TechBlog:
 
         return '\n'.join(message_list)
 
+    def dena_culation(self, to_day: datetime) -> str:
+        """
+        DeNA Engineer's Blogからキュレーションする関数
+        @param to_day: 実行日時
+        @return: 送信するメッセージ
+        """
+        dena = 'https://engineer.dena.com'
+        urls, titles = list(), list()
+        message = ''
+        yesterday = (to_day - timedelta(days=1)).strftime('%B %d, %Y')
+        soup = get_soup(dena)
+
+        for report in soup.find('div', class_='list-content').find_all('article', class_='article-list'):
+            if yesterday == report.find_all('div')[1].text.split('|')[1].strip():
+                titles.append(report.find('h2').text)
+                urls.append(dena + report.find('div').find('a').attrs['href'])
+            else:
+                break
+
+        if len(titles) == 0:
+            return message
+
+        message_list = [f'<{u}|{t}>' for u, t in zip(urls, titles)]
+
+        return '\n'.join(message_list)
+
 
 class Qiita:
     """
@@ -135,12 +161,17 @@ class CatchupTech(Qiita, TechBlog):
                 'func': self.hatena_culation,
                 'args': self.today,
                 'webhook': BLOG_WEBHOOK
-            }
+            },
+            "DeNA Developer's Blog": {
+                'func': self.dena_culation,
+                'args': self.today,
+                'webhook': BLOG_WEBHOOK
+            },
         }
         for site, func in functions.items():
             message = func['func'](func['args'])
             if message:
-                slack(func['webhook'],f'{site}\n{message}')
+                slack(func['webhook'], f'{site}\n{message}')
 
 
 if __name__ == '__main__':
