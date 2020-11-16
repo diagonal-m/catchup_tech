@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import requests
 from bs4 import BeautifulSoup
 
-from consts import QIITA_WEBHOOK, BLOG_WEBHOOK
+from consts import QIITA_WEBHOOK, BLOG_WEBHOOK, NEWS_WEBHOOK
 
 
 def slack(webhook: str, message: str):
@@ -27,6 +27,36 @@ def get_soup(url: str) -> BeautifulSoup:
     """
     response = requests.get(url, timeout=(5.0, 30)).text
     return BeautifulSoup(response, 'html.parser')
+
+
+class TechNews:
+    """
+    テックニュースサイトキャッチアップクラス
+    """
+    def ai_scholar_culation(self, to_day: datetime) -> str:
+        """
+        AI-SCHOLARからキュレーションする関数
+        @param to_day: 実行日時のdatetime
+        @return: 送信するメッセージ
+        """
+        ai_scholar = 'https://ai-scholar.tech/'
+        urls, titles = list(), list()
+        message = ''
+        yesterday = (to_day - timedelta(days=1)).strftime('%Y年%m月%d日')
+        soup = get_soup(ai_scholar)
+
+        for report in soup.find('main', class_='main main--index').find_all('article'):
+            if yesterday == report.find('time').text.strip():
+                titles.append(report.find('h3').text.strip())
+                urls.append(report.find('a').attrs['href'])
+            else:
+                break
+        if len(titles) == 0:
+            return message
+
+        message_list = [f'<{u}|{t}>' for u, t in zip(urls, titles)]
+
+        return '\n'.join(message_list)
 
 
 class TechBlog:
@@ -117,9 +147,9 @@ class Qiita:
             qiita_tag_url = base_url + tag
             soup = get_soup(qiita_tag_url)
             report_list = [
-                report.find('div', class_='css-xofpgy eomqo7a3')
+                report.find('div', class_='stopover_food_app-xofpgy eomqo7a3')
                 for report in
-                soup.find('div', class_='css-10v1rem e1mdkbz70').find_all('div', class_='css-bbe22u eomqo7a0')
+                soup.find('div', class_='stopover_food_app-10v1rem e1mdkbz70').find_all('div', class_='stopover_food_app-bbe22u eomqo7a0')
             ]
             titles.extend([
                 report.text for report in report_list
@@ -136,7 +166,7 @@ class Qiita:
         return '\n'.join(message_list)
 
 
-class CatchupTech(Qiita, TechBlog):
+class CatchupTech(Qiita, TechBlog, TechNews):
     """
     キャッチアップテッククラス
     """
@@ -167,6 +197,11 @@ class CatchupTech(Qiita, TechBlog):
                 'args': self.today,
                 'webhook': BLOG_WEBHOOK
             },
+            "AI-SCHOLAR": {
+                'func': self.ai_scholar_culation,
+                'args': self.today,
+                'webhook': NEWS_WEBHOOK
+            }
         }
         for site, func in functions.items():
             message = func['func'](func['args'])
