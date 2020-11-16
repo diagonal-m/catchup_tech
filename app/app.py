@@ -147,9 +147,9 @@ class Qiita:
             qiita_tag_url = base_url + tag
             soup = get_soup(qiita_tag_url)
             report_list = [
-                report.find('div', class_='stopover_food_app-xofpgy eomqo7a3')
+                report.find('div', class_='css-xofpgy eomqo7a3')
                 for report in
-                soup.find('div', class_='stopover_food_app-10v1rem e1mdkbz70').find_all('div', class_='stopover_food_app-bbe22u eomqo7a0')
+                soup.find('div', class_='css-10v1rem e1mdkbz70').find_all('div', class_='css-bbe22u eomqo7a0')
             ]
             titles.extend([
                 report.text for report in report_list
