@@ -125,7 +125,7 @@ class Qiita:
         """
         self.tag_dict = {
             'Sun': {'tags': ['AWS', 'lambda', 'インフラ', 'Linux', 'ec2']},
-            'Mon': {'tags': ['python', 'Django']},
+            'Mon': {'tags': ['python', 'Django', 'Ruby', 'Rails']},
             'Tue': {'tags': ['HTML5', 'CSS', 'JavaScript']},
             'Wed': {'tags': ['Docker', 'docker-compose']},
             'Thu': {'tags': ['新人プログラマ応援', '初心者']},
