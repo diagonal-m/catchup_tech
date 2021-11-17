@@ -146,16 +146,12 @@ class Qiita:
         for tag in tags:
             qiita_tag_url = base_url + tag
             soup = get_soup(qiita_tag_url)
-            report_list = [
-                report.find('div', class_='css-xofpgy eomqo7a3')
-                for report in
-                soup.find('div', class_='css-10v1rem e1mdkbz70').find_all('div', class_='css-bbe22u eomqo7a0')
-            ]
+            report_list = soup.find('div', class_='p-tagShow_mainMiddle').find_all('article', class_='css-81mxb5')
             titles.extend([
-                report.text for report in report_list
+                report.find('h2').text for report in report_list
             ])
             urls.extend([
-                report.find_all('a')[1].attrs['href'] for report in report_list
+                report.find('h2').find('a').attrs['href'] for report in report_list
             ])
             sleep(3)
 
